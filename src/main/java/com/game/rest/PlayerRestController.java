@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping("/rest/players")
@@ -50,6 +51,48 @@ public class PlayerRestController {
         sort(order);
 
         return new ResponseEntity<>(allPlayers.subList(indexFrom, indexTo), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/count", method = RequestMethod.GET)
+    public ResponseEntity<Integer> count(@RequestParam(required = false) String name, @RequestParam(required = false) String title,
+                                               @RequestParam(required = false) Race race, @RequestParam(required = false) Profession profession,
+                                               @RequestParam(required = false) Long after, @RequestParam(required = false) Long before,
+                                               @RequestParam(required = false) Boolean banned, @RequestParam(required = false) Integer minExperience,
+                                               @RequestParam(required = false) Integer maxExperience, @RequestParam(required = false) Integer minLevel,
+                                               @RequestParam(required = false) Integer maxLevel)
+    {
+        List<Player> players = this.playerService.getAll();
+
+        //Filter
+
+        if(name != null)players.removeIf(player -> !player.getName().toLowerCase().contains(name.toLowerCase()));
+        if(title != null)players.removeIf(player -> !player.getTitle().toLowerCase().contains(title.toLowerCase()));
+        if(race != null)players.removeIf(player -> !player.getRace().toLowerCase().equalsIgnoreCase(race.name()));
+        if(profession != null)players.removeIf(player -> !player.getProfession().toLowerCase().equalsIgnoreCase(profession.name()));
+        if(banned != null) {
+            if(banned)players.removeIf(player -> !player.getBanned());
+            else players.removeIf(Player::getBanned);
+        }
+
+        if(after != null)players.removeIf(player -> player.getBirthday().getTime() < after);
+        if(before != null)players.removeIf(player -> player.getBirthday().getTime() > before);
+        if(before != null && after !=null)
+            if(before<after)
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        if(minExperience != null)players.removeIf(player -> player.getExperience() < minExperience);
+        if(maxExperience != null)players.removeIf(player -> player.getExperience() > maxExperience);
+        if(minExperience != null && maxExperience !=null)
+            if(maxExperience<minExperience)
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        if(minLevel != null)players.removeIf(player -> player.getLevel()< minLevel);
+        if(maxLevel!= null)players.removeIf(player -> player.getLevel()> maxLevel);
+        if(minLevel != null && maxLevel !=null)
+            if(maxLevel<minLevel)
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+            return new ResponseEntity<>(players.size(), HttpStatus.OK);
     }
 
     private boolean filter(String name, String title, Race race, Profession profession, Long after, Long before,
@@ -107,11 +150,6 @@ public class PlayerRestController {
         }
     }
 
-    @RequestMapping(value = "/count", method = RequestMethod.GET)
-    public ResponseEntity<Integer> count(){
-        return new ResponseEntity<>(this.allPlayers.size(), HttpStatus.OK);
-    }
-
     @PostMapping
     public ResponseEntity<Player> createPlayer(@RequestBody Player player){
 
@@ -120,8 +158,10 @@ public class PlayerRestController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         if(player.getName().length() > 12 || player.getTitle().length() > 30 || player.getName().equals("")
-                || player.getBirthday().getTime() < 0 || player.getBirthday().getTime() > Calendar.getInstance().getTimeInMillis())
+                || player.getBirthday().getTime() < 0 || player.getBirthday().getTime() > Calendar.getInstance().getTimeInMillis()
+                || player.getExperience() > 10000000)
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
 
         player.setLevel(player.calculateLevel(player.getExperience()));
         player.setUntilNextLevel(player.howMuchToNextLevel(player.getExperience(),player.getLevel()));
@@ -130,22 +170,31 @@ public class PlayerRestController {
     }
 
     @RequestMapping(value = "/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Player> getPlayer(@PathVariable("id") Long id){
+    public ResponseEntity<Player> getPlayer(@PathVariable("id") String id){
 
-        if(id < 0)
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-        Player player = this.playerService.getById(id);
-
-        if(player == null)
+        if(id == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
-        return  new ResponseEntity<>(player,HttpStatus.OK);
+        if (Pattern.matches("[a-zA-Z]+", id) || Integer.parseInt(id) <= 0)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        int playerId = Integer.parseInt(id);
+
+        if(this.playerService.checkById(playerId)) {
+            Player player = this.playerService.getById(Integer.parseInt(id));
+            return new ResponseEntity<>(player, HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PostMapping("/{id}")
-    public ResponseEntity<Player> updatePlayer(@PathVariable("id") long id, @RequestBody Player updatedPlayer){
-        if(id<0)
+    public ResponseEntity<Player> updatePlayer(@PathVariable("id") String id, @RequestBody Player updatedPlayer){
+
+        if(id == null)
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        if (Pattern.matches("[a-zA-Z]+", id) || Integer.parseInt(id) <= 0)
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         Player player = getPlayer(id).getBody();
@@ -179,8 +228,21 @@ public class PlayerRestController {
         return new ResponseEntity<>(player, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}")
-    public void deletePlayer(@PathVariable("id") long playerId){
-        this.playerService.deleteById(playerId);
+    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<HttpStatus>deletePlayer(@PathVariable("id") String id){
+        if(id == null)
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        if (Pattern.matches("[a-zA-Z]+", id) || Integer.parseInt(id) <= 0)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        int playerId = Integer.parseInt(id);
+
+        if(this.playerService.checkById(playerId)){
+            this.playerService.deleteById(playerId);
+            return new ResponseEntity<>(HttpStatus.OK, HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND);
     }
 }

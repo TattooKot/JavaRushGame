@@ -3,8 +3,6 @@ package com.game.service;
 import com.game.entity.Player;
 import com.game.repository.PlayerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +19,10 @@ public class PlayerService {
     }
 
     public Player getById(long id){
-        return playerRepository.findById(id).orElseThrow(null);
+        if (this.playerRepository.existsById(id)) {
+            return this.playerRepository.findById(id).get();
+        }
+        return null;
     }
 
     public List<Player> getAll(){
@@ -33,9 +34,14 @@ public class PlayerService {
     }
 
     public void deleteById(long id){
-        playerRepository.deleteById(id);
+        if (this.playerRepository.existsById(id)) {
+            this.playerRepository.deleteById(id);
+        }
     }
 
+    public boolean checkById(long id) {
+        return playerRepository.existsById(id);
+    }
 
 
 }
