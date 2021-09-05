@@ -34,13 +34,6 @@ public class PlayerRestController {
                                                ){
         this.allPlayers = this.playerService.getAll();
 
-        //Paging
-        if(pageSize == null) pageSize = 3;
-        if(pageNumber == null) pageNumber = 0;
-
-        int indexFrom = pageNumber == 0 ? 0 : pageSize * pageNumber;
-        int indexTo = Math.min(allPlayers.size(), (pageSize * (pageNumber + 1)));
-
         //Filter
         boolean filter = filter(name, title, race,profession,after,before,banned,minExperience,maxExperience,minLevel,maxLevel);
         if(!filter)
@@ -49,6 +42,13 @@ public class PlayerRestController {
         //sort
         if(order == null) order = PlayerOrder.ID;
         sort(order);
+
+        //Paging
+        if(pageSize == null) pageSize = 3;
+        if(pageNumber == null) pageNumber = 0;
+
+        int indexFrom = pageNumber == 0 ? 0 : pageSize * pageNumber;
+        int indexTo = Math.min(allPlayers.size(), (pageSize * (pageNumber + 1)));
 
         return new ResponseEntity<>(allPlayers.subList(indexFrom, indexTo), HttpStatus.OK);
     }
