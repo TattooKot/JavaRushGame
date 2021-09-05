@@ -205,21 +205,12 @@ public class PlayerRestController {
         if(updatedPlayer == null)
             return new ResponseEntity<>(player, HttpStatus.OK);
 
-
-//
-//        Player player = getPlayer(id).getBody();
-//
-//        if(player == null)
-//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-//
-//        if(updatedPlayer.getName().isEmpty())
-//            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
         if(updatedPlayer.getName() != null) {
             if(updatedPlayer.getName().isEmpty())
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             player.setName(updatedPlayer.getName());
         }
+
         if(updatedPlayer.getTitle() != null)
             player.setTitle(updatedPlayer.getTitle());
 

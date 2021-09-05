@@ -54,22 +54,6 @@ public class Player {
         this.untilNextLevel = howMuchToNextLevel(experience, level);
     }
 
-    @Override
-    public String toString() {
-        return "Player{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", title='" + title + '\'' +
-                ", race='" + race + '\'' +
-                ", profession='" + profession + '\'' +
-                ", birthday=" + birthday +
-                ", banned=" + banned +
-                ", experience=" + experience +
-                ", level=" + level +
-                ", untilNextLevel=" + untilNextLevel +
-                '}';
-    }
-
     public int calculateLevel(int experience){
         return (int) (Math.sqrt(2500+200*experience)-50)/100;
     }
