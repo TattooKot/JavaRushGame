@@ -53,6 +53,23 @@ public class Player {
         this.level = calculateLevel(experience);
         this.untilNextLevel = howMuchToNextLevel(experience, level);
     }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", title='" + title + '\'' +
+                ", race='" + race + '\'' +
+                ", profession='" + profession + '\'' +
+                ", birthday=" + birthday +
+                ", banned=" + banned +
+                ", experience=" + experience +
+                ", level=" + level +
+                ", untilNextLevel=" + untilNextLevel +
+                '}';
+    }
+
     public int calculateLevel(int experience){
         return (int) (Math.sqrt(2500+200*experience)-50)/100;
     }
@@ -83,6 +100,8 @@ public class Player {
 
     public void setExperience(Integer experience) {
         this.experience = experience;
+        this.level = calculateLevel(experience);
+        this.untilNextLevel = howMuchToNextLevel(experience,level);
     }
 
     public Boolean getBanned() {
@@ -137,7 +156,4 @@ public class Player {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 }

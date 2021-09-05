@@ -202,9 +202,24 @@ public class PlayerRestController {
         if(player == null)
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
-        if(updatedPlayer.getName() != null)
-            player.setName(updatedPlayer.getName());
+        if(updatedPlayer == null)
+            return new ResponseEntity<>(player, HttpStatus.OK);
 
+
+//
+//        Player player = getPlayer(id).getBody();
+//
+//        if(player == null)
+//            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+//
+//        if(updatedPlayer.getName().isEmpty())
+//            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        if(updatedPlayer.getName() != null) {
+            if(updatedPlayer.getName().isEmpty())
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            player.setName(updatedPlayer.getName());
+        }
         if(updatedPlayer.getTitle() != null)
             player.setTitle(updatedPlayer.getTitle());
 
@@ -214,14 +229,20 @@ public class PlayerRestController {
         if(updatedPlayer.getRace() != null)
             player.setRace(updatedPlayer.getRace());
 
-        if(updatedPlayer.getBirthday() != null)
+        if(updatedPlayer.getBirthday() != null) {
+            if (updatedPlayer.getBirthday().getTime() < 0)
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             player.setBirthday(updatedPlayer.getBirthday());
+        }
 
         if(updatedPlayer.getBanned() != null)
             player.setBanned(updatedPlayer.getBanned());
 
-        if(updatedPlayer.getExperience() != null)
+        if(updatedPlayer.getExperience() != null) {
+            if (updatedPlayer.getExperience() < 0 || updatedPlayer.getExperience() > 10_000_000)
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             player.setExperience(updatedPlayer.getExperience());
+        }
 
         this.playerService.savePlayer(player);
 
