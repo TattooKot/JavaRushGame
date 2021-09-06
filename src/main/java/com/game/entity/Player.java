@@ -66,16 +66,8 @@ public class Player {
         return untilNextLevel;
     }
 
-    public void setUntilNextLevel(Integer untilNextLevel) {
-        this.untilNextLevel = untilNextLevel;
-    }
-
     public Integer getLevel() {
         return level;
-    }
-
-    public void setLevel(Integer level) {
-        this.level = level;
     }
 
     public Integer getExperience() {

@@ -136,9 +136,7 @@ public class PlayerRestController {
                 || player.getExperience() > 10000000)
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
-
-        player.setLevel(player.calculateLevel(player.getExperience()));
-        player.setUntilNextLevel(player.howMuchToNextLevel(player.getExperience(),player.getLevel()));
+        player.setExperience(player.getExperience());
 
         return new ResponseEntity<>(this.playerService.savePlayer(player), HttpStatus.OK);
     }
