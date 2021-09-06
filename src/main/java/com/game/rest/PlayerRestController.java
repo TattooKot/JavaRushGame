@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 @RequestMapping("/rest/players")
 public class PlayerRestController {
     private final PlayerService playerService;
-    private List<Player> allPlayers;
     public PlayerRestController(PlayerService playerService) {
         this.playerService = playerService;
     }
@@ -32,16 +31,16 @@ public class PlayerRestController {
                                                @RequestParam(required = false) Integer maxLevel, @RequestParam(required = false) PlayerOrder order,
                                                @RequestParam(required = false) Integer pageNumber, @RequestParam(required = false) Integer pageSize
                                                ){
-        this.allPlayers = this.playerService.getAll();
+        List<Player> allPlayers = this.playerService.getAll();
 
         //Filter
-        boolean filter = filter(name, title, race,profession,after,before,banned,minExperience,maxExperience,minLevel,maxLevel);
+        boolean filter = filter(allPlayers, name, title, race,profession,after,before,banned,minExperience,maxExperience,minLevel,maxLevel);
         if(!filter)
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         //sort
         if(order == null) order = PlayerOrder.ID;
-        sort(order);
+        sort(allPlayers, order);
 
         //Paging
         if(pageSize == null) pageSize = 3;
@@ -61,41 +60,16 @@ public class PlayerRestController {
                                                @RequestParam(required = false) Integer maxExperience, @RequestParam(required = false) Integer minLevel,
                                                @RequestParam(required = false) Integer maxLevel)
     {
-        List<Player> players = this.playerService.getAll();
+        List<Player> allPlayers = this.playerService.getAll();
 
-        //Filter
+        boolean filter = filter(allPlayers, name, title, race,profession,after,before,banned,minExperience,maxExperience,minLevel,maxLevel);
+        if(!filter)
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
-        if(name != null)players.removeIf(player -> !player.getName().toLowerCase().contains(name.toLowerCase()));
-        if(title != null)players.removeIf(player -> !player.getTitle().toLowerCase().contains(title.toLowerCase()));
-        if(race != null)players.removeIf(player -> !player.getRace().toLowerCase().equalsIgnoreCase(race.name()));
-        if(profession != null)players.removeIf(player -> !player.getProfession().toLowerCase().equalsIgnoreCase(profession.name()));
-        if(banned != null) {
-            if(banned)players.removeIf(player -> !player.getBanned());
-            else players.removeIf(Player::getBanned);
-        }
-
-        if(after != null)players.removeIf(player -> player.getBirthday().getTime() < after);
-        if(before != null)players.removeIf(player -> player.getBirthday().getTime() > before);
-        if(before != null && after !=null)
-            if(before<after)
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-        if(minExperience != null)players.removeIf(player -> player.getExperience() < minExperience);
-        if(maxExperience != null)players.removeIf(player -> player.getExperience() > maxExperience);
-        if(minExperience != null && maxExperience !=null)
-            if(maxExperience<minExperience)
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-        if(minLevel != null)players.removeIf(player -> player.getLevel()< minLevel);
-        if(maxLevel!= null)players.removeIf(player -> player.getLevel()> maxLevel);
-        if(minLevel != null && maxLevel !=null)
-            if(maxLevel<minLevel)
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-            return new ResponseEntity<>(players.size(), HttpStatus.OK);
+            return new ResponseEntity<>(allPlayers.size(), HttpStatus.OK);
     }
 
-    private boolean filter(String name, String title, Race race, Profession profession, Long after, Long before,
+    private boolean filter(List<Player> allPlayers, String name, String title, Race race, Profession profession, Long after, Long before,
                        Boolean banned, Integer minExperience, Integer maxExperience, Integer minLevel, Integer maxLevel ){
 
         boolean ok = true;
@@ -130,7 +104,7 @@ public class PlayerRestController {
         return ok;
     }
 
-    private void sort(PlayerOrder order){
+    private void sort(List<Player> allPlayers, PlayerOrder order){
 
         if(order.equals(PlayerOrder.ID)) {
             Comparator<Player> byId = Comparator.comparing(Player::getId);
